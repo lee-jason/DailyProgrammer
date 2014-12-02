@@ -1,5 +1,5 @@
 (function(){
-    fs = require('fs');
+    var fs = require('fs');
 
     fs.readFile("book.txt", {encoding: "utf8"}, function(err, data){
         if(err) throw err;
@@ -14,13 +14,13 @@
             outputArr[wordArr[i]] = outputArr[wordArr[i]] += 1;
             }
         }
-        console.log(outputArr);
-//        for(var key in outputArr){
-//            
-//        }
-//        fs.writeFile('output.txt', outputArr, function(err){
-//            if(err) throw err;
-//            console.log('done');
-//        });
+        var outputStrBuilder = "";
+        for(var key in outputArr){
+            outputStrBuilder += key + ":" + outputArr[key] + "\n";
+        }
+        fs.writeFile('output.txt', outputStrBuilder, function(err){
+            if(err) throw err;
+            console.log('done');
+        });
     });
 })();
