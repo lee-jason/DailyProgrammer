@@ -6,12 +6,13 @@ import java.util.Random;
 
 public class Map {
 	private Entity[][] map;
-	private final double ASTEROID_PERCENTAGE = 0.4;
-	private final double GRAVITYWELL_PERCENTAGE = 0.01;
+	private final double ASTEROID_PERCENTAGE = 0.3;
+	private final double GRAVITYWELL_PERCENTAGE = 0.05;
 	private Point start;
 	private Point end;
 	private Random random;
 	
+	//TODO remove exceptions from flow control
 	public Map(int dimension, Point start, Point end, Random random) throws InvalidParameterException{
 
 		this.random = random;
@@ -20,8 +21,6 @@ public class Map {
 		if(ASTEROID_PERCENTAGE + GRAVITYWELL_PERCENTAGE > 1){
 			throw new InvalidParameterException();
 		}
-		
-		
 			map = new Entity[dimension][dimension];
 			generateMap();
 		try{
@@ -83,15 +82,19 @@ public class Map {
 		//start the origin point
 		PathNode currPathNode = new PathNode(null, start, 0);
 		pathMap[start.x][start.y] = currPathNode;
+		pq.add(calculatePathCost(currPathNode), currPathNode);
 		//until the end has not been met or while the priorityqueue still has areas to go through
 		//TODO: has an issue when the start point is surrounded on all sides since the beginning
 		do{
-			//add surrounding non visited nodes to priorityqueue where the key is the stepsFromStart + distance to end and value is the current point
-			addSurroundingNodesToPriorityQueue(pq, pathMap, currPathNode);
 			//pop off the first item in priorityqueue and make it the currentPoint
 			currPathNode = pq.remove();
+			//add surrounding non visited nodes to priorityqueue where the key is the stepsFromStart + distance to end and value is the current point
+			addSurroundingNodesToPriorityQueue(pq, pathMap, currPathNode);
+			if(currPathNode.point.equals(end)){
+				break;
+			}
 		}
-		while(!currPathNode.point.equals(end) || pq.peek() != null);
+		while((pq.peek() != null));
 		
 		System.out.println(pathMap[end.x][end.y]);
 	}
@@ -100,12 +103,16 @@ public class Map {
 		int originX = pathNode.point.x - 1;
 		int originY = pathNode.point.y - 1;
 		
-		for(int y = originX; y < originX + 3; y++){
-			for(int x = originY; x < originY + 3; x++){
+		for(int y = originY; y < originY + 3; y++){
+			for(int x = originX; x < originX + 3; x++){
 				try{
+					
 					//only add non traversed neighboring path nodes. ignore visited path nodes. also go around entities, asteroids, gravity
 					if(pathMap[x][y] == null && !hasEntity(new Point(x, y), true)){
 						PathNode neighborNode = new PathNode(pathNode, new Point(x, y),pathNode.stepsFromStart+1);
+						if(Math.abs(pathNode.point.x - neighborNode.point.x) >= 2 || Math.abs(pathNode.point.y - neighborNode.point.y) >= 2){
+							System.out.println("something went wrong.");
+						}
 						pathMap[neighborNode.point.x][neighborNode.point.y] = neighborNode;
 						pq.add(new Double(calculatePathCost(neighborNode)), neighborNode);
 					}
@@ -147,6 +154,10 @@ public class Map {
 			this.parent = parent;
 			this.point = point;
 			this.stepsFromStart = stepsFromStart;
+		}
+		
+		public String toString(){
+			return this.point.toString();
 		}
 	}
 	
