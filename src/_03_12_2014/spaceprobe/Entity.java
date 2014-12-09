@@ -1,5 +1,5 @@
 package _03_12_2014.spaceprobe;
 
 public enum Entity {
-	asteroid, gravity, gravitypull, empty, start, end;
+	asteroid, gravity, gravitypull, empty, start, end, path;
 }

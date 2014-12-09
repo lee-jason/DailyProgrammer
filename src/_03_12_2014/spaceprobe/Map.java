@@ -6,8 +6,8 @@ import java.util.Random;
 
 public class Map {
 	private Entity[][] map;
-	private final double ASTEROID_PERCENTAGE = 0.3;
-	private final double GRAVITYWELL_PERCENTAGE = 0.05;
+	private final double ASTEROID_PERCENTAGE = 0.15;
+	private final double GRAVITYWELL_PERCENTAGE = 0.03;
 	private Point start;
 	private Point end;
 	private Random random;
@@ -96,7 +96,42 @@ public class Map {
 		}
 		while((pq.peek() != null));
 		
-		System.out.println(pathMap[end.x][end.y]);
+		//path didn't reach end,  find the closest the path ever got to the end
+		if(pq.peek() == null){
+			PointDistance closestPoint = new PointDistance(new Point(-1, -1), Double.MAX_VALUE);
+			for(int y = 0; y < pathMap[0].length; y++){
+				for(int x = 0; x < pathMap.length; x++){
+					if(pathMap[x][y] != null){
+						if(getDistance(pathMap[x][y].point, end) < closestPoint.distance){
+							closestPoint = new PointDistance(new Point(x, y), getDistance(pathMap[x][y].point, end));
+						}
+					}
+				}
+			}
+			drawPathOnMap(pathMap[closestPoint.point.x][closestPoint.point.y]);
+		}
+		//else path reached the end
+		else{
+			drawPathOnMap(pathMap[end.x][end.y]);
+		}
+	}
+	
+	private class PointDistance{
+		private Point point;
+		private double distance;
+		public PointDistance(Point point, double distance){
+			this.point = point;
+			this.distance = distance;
+		}
+	}
+	
+	private void drawPathOnMap(PathNode pathNode){
+		PathNode currPathNode = pathNode;
+		while(currPathNode.parent != null){
+			Point currPoint = currPathNode.point;
+			map[currPoint.x][currPoint.y] = Entity.path;
+			currPathNode = currPathNode.parent;
+		}
 	}
 	
 	private void addSurroundingNodesToPriorityQueue(KeyValuePriorityQueue<Double, PathNode> pq, PathNode[][] pathMap, PathNode pathNode){
@@ -110,9 +145,6 @@ public class Map {
 					//only add non traversed neighboring path nodes. ignore visited path nodes. also go around entities, asteroids, gravity
 					if(pathMap[x][y] == null && !hasEntity(new Point(x, y), true)){
 						PathNode neighborNode = new PathNode(pathNode, new Point(x, y),pathNode.stepsFromStart+1);
-						if(Math.abs(pathNode.point.x - neighborNode.point.x) >= 2 || Math.abs(pathNode.point.y - neighborNode.point.y) >= 2){
-							System.out.println("something went wrong.");
-						}
 						pathMap[neighborNode.point.x][neighborNode.point.y] = neighborNode;
 						pq.add(new Double(calculatePathCost(neighborNode)), neighborNode);
 					}
@@ -126,8 +158,11 @@ public class Map {
 	}
 	
 	private double calculatePathCost(PathNode pathNode){
-		
-		return pathNode.stepsFromStart + Math.pow(pathNode.point.x - end.x, 2) + Math.pow(pathNode.point.y - end.y, 2);
+		return pathNode.stepsFromStart + getDistance(pathNode.point, end);
+	}
+	
+	private double getDistance(Point start, Point end){
+		return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
 	}
 	
 	private void paintGravityPull(Point point){
@@ -207,13 +242,16 @@ public class Map {
 					sb.append('X');
 				}
 				else if(map[x][y] == Entity.empty){
-					sb.append('.');
+					sb.append(' ');
 				}
 				else if(map[x][y] == Entity.start){
 					sb.append('S');
 				}
 				else if(map[x][y] == Entity.end){
 					sb.append('E');
+				}
+				else if(map[x][y] == Entity.path){
+					sb.append('P');
 				}
 				//sb.append(", ");
 			}
